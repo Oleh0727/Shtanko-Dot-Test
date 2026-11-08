@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Піймай сонячного зайця (Крапковий тест Штанька)</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f2f2f7;
+            color: #1c1c1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .game-card {
+            background: #ffffff;
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 94%;
+            max-width: 410px;
+            box-sizing: border-box;
+            text-align: center;
+            max-height: 96vh;
+            overflow-y: auto;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #1c1c1e;
+            margin-bottom: 2px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #3a3a3c;
+            margin: 8px 0 4px 0;
+            text-align: left;
+        }
+
+        .states-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .state-btn {
+            background-color: #f2f2f7;
+            border: 2px solid #e5e5ea;
+            padding: 10px 6px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #3a3a3c;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .state-btn.full-width {
+            grid-column: span 2;
+        }
+
+        .state-btn.selected {
+            background-color: #e3f2fd;
+            border-color: #007aff;
+            color: #007aff;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f8f0;
+            padding: 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .stat-item span { color: #007aff; }
+
+        #grid-container {
+            width: 100%;
+            height: 200px;
+            background-color: #fff;
+            border: 2px solid #e5e5ea;
+            background-image: 
+                linear-gradient(to right, #f0f0f5 1px, transparent 1px),
+                linear-gradient(to bottom, #f0f0f5 1px, transparent 1px);
+            background-size: 40px 40px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            touch-action: none;
+            margin-bottom: 8px;
+        }
+
+        .target-cell {
+            width: 44px;
+            height: 44px;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: none;
+        }
+        .dot {
+            width: 18px;
+            height: 18px;
+            background-color: #ff3b30;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255,59,48,0.6);
+            animation: pulse 0.8s infinite alternate;
+            pointer-events: none;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); }
+            100% { transform: scale(1.15); }
+        }
+
+        .btn {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 6px;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .btn:active { background-color: #005ec4; transform: scale(0.98); }
+
+        #results { 
+            display: none; 
+            text-align: left; 
+            font-size: 13px; 
+            line-height: 1.35; 
+        }
+
+        .report-box {
+            background: #f8f8f6;
+            border-radius: 10px;
+            padding: 8px;
+            margin-top: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        /* Стилі для гістограми */
+        .chart-container {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .chart-bar-row {
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+        }
+        .chart-label {
+            width: 90px;
+            font-weight: 600;
+            color: #3a3a3c;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chart-bar-wrapper {
+            flex: 1;
+            background: #e5e5ea;
+            border-radius: 4px;
+            height: 16px;
+            margin: 0 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+        .chart-value {
+            width: 35px;
+            text-align: right;
+            font-weight: 600;
+            color: #1c1c1e;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <h2>☀️ Піймай сонячного зайця</h2>
+    <div class="subtitle">Крапковий тест Штанька</div>
+
+    <!-- Екран вибору стану -->
+    <div id="setup-screen">
+        <div class="section-title">Обери свій стан на цю гру:</div>
+        <div class="states-grid">
+            <button class="state-btn selected" onclick="selectState('Спокій', this)">🧘 Спокій <br><span id="cnt-Спокій" style="font-size:10px; color:#8e8e93;">(0 ігр)</span></button>
+            <button class="state-btn" onclick="selectState('Тривожність', this)">⚡ Тривожність <br><span id="cnt-Тривожність" style="font-size:10px; color:#8e8e93;">(0 ігр)</span></button>
+            <button class="state-btn" onclick="selectState('Радість', this)">✨ Радість <br><span id="cnt-Радість" style="font-size:10px; color:#8e8e93;">(0 ігр)</span></button>
+            <button class="state-btn" onclick="selectState('Здивування', this)">😲 Здивування <br><span id="cnt-Здивування" style="font-size:10px; color:#8e8e93;">(0 ігр)</span></button>
+            <button class="state-btn full-width" onclick="selectState('Фізичне навантаження', this)">🏃 Фізичне навантаження <span id="cnt-Фізичне навантаження" style="font-size:10px; color:#8e8e93;">(0 ігр)</span></button>
+        </div>
+
+        <button class="btn" id="action-btn">Старт тесту (15с)</button>
+    </div>
+
+    <!-- Панель гри -->
+    <div class="stats-row" id="stats-bar" style="display: none;">
+        <div class="stat-item">Час: <span id="timer">15</span>с</div>
+        <div class="stat-item">Крапки: <span id="score">0</span></div>
+        <div class="stat-item">Помилки: <span id="misses">0</span></div>
+    </div>
+
+    <div id="grid-container"></div>
+
+    <!-- Екран результатів -->
+    <div id="results">
+        <div class="section-title" style="margin-top: 0;">Результат поточної спроби:</div>
+        <p id="res-content" style="margin: 3px 0 8px 0;"></p>
+        
+        <div class="section-title">Гістограма результатів (середні влучання):</div>
+        <div class="report-box" id="report-content"></div>
+
+        <button class="btn" id="reset-btn" style="margin-top: 8px;">Грати знову в іншому стані</button>
+    </div>
+</div>
+
+<script>
+    let selectedState = 'Спокій';
+    let score = 0;
+    let misses = 0;
+    let timeLeft = 15;
+    let timerInterval = null;
+    let gameActive = false;
+    let currentDot = null;
+
+    let sessionHistory = {};
+
+    const statesList = ['Спокій', 'Тривожність', 'Радість', 'Здивування', 'Фізичне навантаження'];
+
+    // Кольори для гістограми
+    const stateColors = {
+        'Тривожність': '#ff3b30',        // Червоний
+        'Спокій': '#8e8e93',             // Сірий
+        'Фізичне навантаження': '#34c759', // Зелений
+        'Радість': '#ffcc00',            // Жовтий / золотистий
+        'Здивування': '#af52de'          // Фіолетовий
+    };
+
+    const gridContainer = document.getElementById('grid-container');
+    const timerSpan = document.getElementById('timer');
+    const scoreSpan = document.getElementById('score');
+    const missesSpan = document.getElementById('misses');
+    const actionBtn = document.getElementById('action-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const statsBar = document.getElementById('stats-bar');
+    const setupScreen = document.getElementById('setup-screen');
+    const resultsDiv = document.getElementById('results');
+    const resContent = document.getElementById('res-content');
+    const reportContent = document.getElementById('report-content');
+
+    function updateStateCounters() {
+        statesList.forEach(st => {
+            let count = sessionHistory[st] ? sessionHistory[st].length : 0;
+            let el = document.getElementById(`cnt-${st}`);
+            if (el) el.textContent = `(${count} ігр)`;
+        });
+    }
+
+    updateStateCounters();
+
+    function selectState(stateName, btnElement) {
+        selectedState = stateName;
+        document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('selected'));
+        btnElement.classList.add('selected');
+    }
+
+    document.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    actionBtn.addEventListener('touchend', (e) => { e.preventDefault(); startGame(); });
+    actionBtn.addEventListener('click', () => { startGame(); });
+
+    resetBtn.addEventListener('touchend', (e) => { e.preventDefault(); resetGame(); });
+    resetBtn.addEventListener('click', () => { resetGame(); });
+
+    gridContainer.addEventListener('click', (e) => {
+        if (!gameActive) return;
+        if (e.target === gridContainer) {
+            misses++;
+            missesSpan.textContent = misses;
+        }
+    });
+
+    function startGame() {
+        if (gameActive) return;
+        score = 0;
+        misses = 0;
+        timeLeft = 15;
+        gameActive = true;
+
+        scoreSpan.textContent = score;
+        missesSpan.textContent = misses;
+        timerSpan.textContent = timeLeft;
+
+        setupScreen.style.display = 'none';
+        statsBar.style.display = 'flex';
+        gridContainer.style.display = 'block';
+        resultsDiv.style.display = 'none';
+
+        spawnDot();
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerSpan.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    function spawnDot() {
+        if (!gameActive) return;
+
+        if (currentDot) {
+            currentDot.remove();
+        }
+
+        const maxX = gridContainer.clientWidth - 44;
+        const maxY = gridContainer.clientHeight - 44;
+        
+        const randomX = Math.floor(Math.random() * Math.max(1, (maxX / 40))) * 40;
+        const randomY = Math.floor(Math.random() * Math.max(1, (maxY / 40))) * 40;
+
+        currentDot = document.createElement('div');
+        currentDot.className = 'target-cell';
+        currentDot.style.left = randomX + 'px';
+        currentDot.style.top = randomY + 'px';
+
+        const dotInner = document.createElement('div');
+        dotInner.className = 'dot';
+        currentDot.appendChild(dotInner);
+
+        const handleHit = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!gameActive) return;
+            score++;
+            scoreSpan.textContent = score;
+            spawnDot();
+        };
+
+        currentDot.addEventListener('click', handleHit);
+        currentDot.addEventListener('touchend', handleHit);
+
+        gridContainer.appendChild(currentDot);
+    }
+
+    function recordAndGetReport(currentState, currentScore, currentMisses) {
+        if (!sessionHistory[currentState]) {
+            sessionHistory[currentState] = [];
+        }
+        
+        let accuracy = currentScore + currentMisses > 0 ? Math.round((currentScore / (currentScore + currentMisses)) * 100) : 0;
+        
+        sessionHistory[currentState].push({
+            score: currentScore,
+            misses: currentMisses,
+            accuracy: accuracy
+        });
+
+        updateStateCounters();
+
+        let stateAverages = [];
+        for (let st in sessionHistory) {
+            let attempts = sessionHistory[st];
+            let avgScore = (attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length).toFixed(1);
+            let avgAccuracy = Math.round(attempts.reduce((sum, a) => sum + a.accuracy, 0) / attempts.length);
+            stateAverages.push({ state: st, score: parseFloat(avgScore), accuracy: avgAccuracy, count: attempts.length });
+        }
+
+        // Знаходимо максимальне значення для пропорційного заповнення гістограми
+        let maxScore = Math.max(...stateAverages.map(item => item.score), 10);
+
+        let reportHtml = `<div class="chart-container">`;
+        
+        stateAverages.forEach(item => {
+            let barWidth = Math.min(Math.round((item.score / maxScore) * 100), 100);
+            let color = stateColors[item.state] || '#007aff';
+
+            reportHtml += `
+                <div class="chart-bar-row">
+                    <div class="chart-label" title="${item.state}">${item.state}</div>
+                    <div class="chart-bar-wrapper">
+                        <div class="chart-bar-fill" style="width: ${barWidth}%; background-color: ${color};"></div>
+                    </div>
+                    <div class="chart-value">${item.score}</div>
+                </div>
+            `;
+        });
+        reportHtml += `</div>`;
+
+        return reportHtml;
+    }
+
+    function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        if (currentDot) {
+            currentDot.remove();
+            currentDot = null;
+        }
+
+        gridContainer.style.display = 'none';
+        statsBar.style.display = 'none';
+        resultsDiv.style.display = 'block';
+
+        let accuracy = score + misses > 0 ? Math.round((score / (score + misses)) * 100) : 0;
+        
+        resContent.innerHTML = `
+            Стан: <b>${selectedState}</b><br>
+            Успішних влучань: <b>${score}</b> | Помилок: <b>${misses}</b> (Точність: ${accuracy}%)
+        `;
+
+        reportContent.innerHTML = recordAndGetReport(selectedState, score, misses);
+    }
+
+    function resetGame() {
+        resultsDiv.style.display = 'none';
+        setupScreen.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
